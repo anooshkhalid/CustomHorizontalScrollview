@@ -1,5 +1,0 @@
-<com.yfchu.view.customview.TabItem xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="80dp"
-    android:layout_height="40dp"
-    android:textColor="#bfbfbf"
-    android:textSize="20sp" />

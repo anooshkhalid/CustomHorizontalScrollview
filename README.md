@@ -1,2 +1,0 @@
-# CustomHorizontalScrollview
-实现了一个HorizontalScollview+ViewPager的效果。

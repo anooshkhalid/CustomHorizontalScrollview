@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         context = this;
 
         init();
-        insertDummyContact();
+        //insertDummyContact();
     }
     private void insertDummyContact() {
         // Two operations are needed to insert a new contact.

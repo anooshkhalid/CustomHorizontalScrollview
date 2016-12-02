@@ -6,19 +6,19 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.yfchu.adapter.HorizontalAdapter;
 import com.yfchu.utils.CommonUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Administrator on 2016/11/5.
+ * yfchu 2016/11/5.
  */
 public class HorizontalView extends HorizontalScrollView {
 
@@ -26,7 +26,9 @@ public class HorizontalView extends HorizontalScrollView {
     private LinearLayout contain;
     private TabItem lastTextView;
     private List<TabItem> textViewList = new ArrayList<>();
+    private List<View> layoutList = new ArrayList<>();
 
+    private boolean isAdd = false;
     private int initNum = 0;
     private Handler mHandler;
 
@@ -49,6 +51,10 @@ public class HorizontalView extends HorizontalScrollView {
         this.mHandler = m;
     }
 
+    public void setLastView(TabItem v) {
+        lastTextView = v;
+    }
+
     public List<TabItem> getTextViewList() {
         return textViewList;
     }
@@ -56,56 +62,87 @@ public class HorizontalView extends HorizontalScrollView {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        if (initNum < 1) {
-            init();
-            initNum++;
-        }
+//        if (initNum < 1) {
+//            init();
+//            initNum++;
+//        }
     }
 
-    private void init() {
+//    private void init() {
+//        contain = (LinearLayout) getChildAt(0);
+//        for (int i = 0; i < 5; i++) {
+//            TabItem horizontal_contain = (TabItem) LayoutInflater.from(mContext).inflate(R.layout.horizontal_contain, null);
+//            horizontal_contain.setId(i);
+//            horizontal_contain.setTextValue(i + 1 + "月龄");
+//            horizontal_contain.setTextColorSelect(getResources().getColor(R.color.textSelectColor));
+//            horizontal_contain.setTextColorNormal(getResources().getColor(R.color.textColor));
+////            horizontal_contain.setTextSize(smallTextSize);
+//            if (i == 0) {
+////                horizontal_contain.setTextSize(normalTextSize);
+//                horizontal_contain.setScaleX(1.1f);
+//                horizontal_contain.setScaleY(1.1f);
+//                horizontal_contain.setTabAlpha(1.0f);
+//                lastTextView = horizontal_contain;
+//            } else {
+//                horizontal_contain.setScaleX(1.0f);
+//                horizontal_contain.setScaleY(1.0f);
+//            }
+//            horizontal_contain.setOnClickListener(new OnClickListener());
+//            contain.addView(horizontal_contain);
+//
+//            TextView line = new TextView(mContext);
+//            line.setWidth(1);
+//            line.setHeight(CommonUtil.convertDpToPx(mContext, 20));
+//            line.setGravity(Gravity.CENTER_VERTICAL);
+//            line.setBackgroundColor(mContext.getResources().getColor(R.color.line));
+//            contain.addView(line);
+//
+//            textViewList.add(horizontal_contain);
+//        }
+//    }
+
+    /**
+     * 设置数据源
+     */
+    public void setAdapter(HorizontalAdapter adapter) {
         contain = (LinearLayout) getChildAt(0);
-        for (int i = 0; i < 5; i++) {
-            TabItem horizontal_contain = (TabItem) LayoutInflater.from(mContext).inflate(R.layout.horizontal_contain, null);
-            horizontal_contain.setId(i);
-            horizontal_contain.setTextValue(i + 1 + "月龄");
-            horizontal_contain.setTextColorSelect(getResources().getColor(R.color.textSelectColor));
-            horizontal_contain.setTextColorNormal(getResources().getColor(R.color.textColor));
-//            horizontal_contain.setTextSize(smallTextSize);
-            if (i == 0) {
-//                horizontal_contain.setTextSize(normalTextSize);
-                horizontal_contain.setScaleX(1.1f);
-                horizontal_contain.setScaleY(1.1f);
-                horizontal_contain.setTabAlpha(1.0f);
-                lastTextView = horizontal_contain;
-            } else {
-                horizontal_contain.setScaleX(1.0f);
-                horizontal_contain.setScaleY(1.0f);
+        contain.removeAllViews();
+        for (int i = 0; i < adapter.getCount(); i++) {
+            LinearLayout layout = null;
+            try {
+                layout = (LinearLayout) adapter.getView(i, layoutList.get(i), contain, lastTextView.getId());
+                isAdd = true;
+            } catch (Exception e) {
+                layout = (LinearLayout) adapter.getView(i, null, contain,0);
+                isAdd = false;
+                if (i == 0)
+                    lastTextView = (TabItem) layout.getChildAt(0);
             }
-            horizontal_contain.setOnClickListener(new OnClickListener());
-            contain.addView(horizontal_contain);
-
-            TextView line = new TextView(mContext);
-            line.setWidth(1);
-            line.setHeight(CommonUtil.convertDpToPx(mContext, 20));
-            line.setGravity(Gravity.CENTER_VERTICAL);
-            line.setBackgroundColor(mContext.getResources().getColor(R.color.line));
-            contain.addView(line);
-
-            textViewList.add(horizontal_contain);
+            contain.addView(layout);
+            if (i + 1 != adapter.getCount()) {
+                TextView line = new TextView(mContext);
+                line.setWidth(1);
+                line.setHeight(CommonUtil.convertDpToPx(mContext, 20));
+                line.setGravity(Gravity.CENTER_VERTICAL);
+                line.setBackgroundColor(mContext.getResources().getColor(R.color.line));
+                contain.addView(line);
+            }
+            if (isAdd == false) {
+                layout.getChildAt(0).setOnClickListener(new OnClickListener());
+                textViewList.add((TabItem) layout.getChildAt(0));
+                layoutList.add(layout);
+            }
         }
+        requestLayout();
     }
 
-    public void setLastView(TabItem v) {
-        lastTextView = v;
-    }
-
-    class OnClickListener implements View.OnClickListener {
+    public class OnClickListener implements View.OnClickListener {
 
         @Override
         public void onClick(final View v) {
             if (lastTextView.getId() == v.getId())
                 return;
-            ValueAnimator anim = ValueAnimator.ofFloat(1.1f, 1.0f);
+            ValueAnimator anim = ValueAnimator.ofFloat(1.1f, 0.95f);
             anim.setDuration(200);
             anim.start();
             anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -114,7 +151,8 @@ public class HorizontalView extends HorizontalScrollView {
 //                    if (textSelectAlpha > 0.3)
 //                        lastTextView.setTabAlpha(textSelectAlpha -= 0.1f);
 //                    Log.i("textSelectAlpha", "textSelectAlpha:" + textSelectAlpha);
-                    lastTextView.setTabAlpha(((Float) animation.getAnimatedValue() - 1.0f) * 10);
+                    if ((Float) animation.getAnimatedValue() >= 1.0f)
+                        lastTextView.setTabAlpha(((Float) animation.getAnimatedValue() - 1.0f) * 10);
                     lastTextView.setScaleX((Float) animation.getAnimatedValue());
                     lastTextView.setScaleY((Float) animation.getAnimatedValue());
                 }
@@ -142,7 +180,7 @@ public class HorizontalView extends HorizontalScrollView {
 
                 }
             });
-            ValueAnimator anim1 = ValueAnimator.ofFloat(1.0f, 1.1f);
+            ValueAnimator anim1 = ValueAnimator.ofFloat(0.95f, 1.1f);
             anim1.setDuration(200);
             anim1.start();
             anim1.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -151,7 +189,8 @@ public class HorizontalView extends HorizontalScrollView {
 //                    if (textNormalAlpha < 0.7)
 //                        ((TabItem) v).setTabAlpha(textNormalAlpha += 0.1f);
 //                    Log.i("textNormalAlpha", "textNormalAlpha:" + textNormalAlpha);
-                    ((TabItem) v).setTabAlpha(((Float) animation.getAnimatedValue() - 1.0f) * 10);
+                    if ((Float) animation.getAnimatedValue() >= 1.0f)
+                        ((TabItem) v).setTabAlpha(((Float) animation.getAnimatedValue() - 1.0f) * 10);
                     ((TabItem) v).setScaleX((Float) animation.getAnimatedValue());
                     ((TabItem) v).setScaleY((Float) animation.getAnimatedValue());
                 }

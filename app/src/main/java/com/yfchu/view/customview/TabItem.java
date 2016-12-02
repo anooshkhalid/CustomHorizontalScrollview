@@ -13,7 +13,7 @@ import android.widget.TextView;
 import com.yfchu.utils.CommonUtil;
 
 /**
- * Created by moon.zhong on 2015/2/4.
+ * yfchu
  */
 public class TabItem extends TextView {
 
@@ -28,8 +28,6 @@ public class TabItem extends TextView {
     private Bitmap mIconNormal;
     private Bitmap mIconSelect;
     private Rect mBoundText;
-//    private Paint mIconPaintSelect;
-//    private Paint mIconPaintNormal;
 
     public TabItem(Context context) {
         this(context, null);
@@ -62,12 +60,6 @@ public class TabItem extends TextView {
         mTextPaintSelect.setColor(mTextColorSelect);
         mTextPaintSelect.setAntiAlias(true);
         mTextPaintSelect.setAlpha(0);
-
-//        mIconPaintSelect = new Paint(Paint.ANTI_ALIAS_FLAG) ;
-//        mIconPaintSelect.setAlpha(0);
-//
-//        mIconPaintNormal = new Paint(Paint.ANTI_ALIAS_FLAG) ;
-//        mIconPaintNormal.setAlpha(0xff);
     }
 
     private void measureText() {

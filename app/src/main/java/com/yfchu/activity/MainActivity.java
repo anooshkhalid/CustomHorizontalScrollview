@@ -13,9 +13,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.yfchu.adapter.HorizontalAdapter;
+import com.yfchu.entity.HorizontalClass;
 import com.yfchu.view.customview.R;
 import com.yfchu.view.customview.ScrollerLayout;
 import com.yfchu.view.customview.TabItem;
@@ -27,6 +30,9 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private Context context;
+    private HorizontalAdapter horizontalAdapter;
+    private List<HorizontalClass> horizontalList = new ArrayList<>();
+
     private TextView line;
     private ScrollerLayout scrollView;
     private HorizontalView horizontalView;
@@ -40,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
      * lastIndex：当前index
      */
     private int lastIndex = 0;
-    
+
     /**
      * targetLeftIndex：下一滑动index
      * rollBackIndex：回滚index
@@ -73,37 +79,6 @@ public class MainActivity extends AppCompatActivity {
         context = this;
 
         init();
-        //insertDummyContact();
-    }
-    private void insertDummyContact() {
-        // Two operations are needed to insert a new contact.
-        ArrayList<ContentProviderOperation> operations = new ArrayList<ContentProviderOperation>(2);
-
-        // First, set up a new raw contact.
-        ContentProviderOperation.Builder op =
-                ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-                        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-                        .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null);
-        operations.add(op.build());
-
-        // Next, set the name for the contact.
-        op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                .withValue(ContactsContract.Data.MIMETYPE,
-                        ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
-                        "__DUMMY CONTACT from runtime permissions sample");
-        operations.add(op.build());
-
-        // Apply the operations.
-        ContentResolver resolver = getContentResolver();
-        try {
-            resolver.applyBatch(ContactsContract.AUTHORITY, operations);
-        } catch (RemoteException e) {
-            Log.d("", "Could not add a new contact: " + e.getMessage());
-        } catch (OperationApplicationException e) {
-            Log.d("", "Could not add a new contact: " + e.getMessage());
-        }
     }
 
     /**
@@ -128,11 +103,19 @@ public class MainActivity extends AppCompatActivity {
         } else {
             scale = 0.01f;
         }
+
+        for (int i = 0; i < 5; i++) {
+            HorizontalClass c = new HorizontalClass();
+            c.setAge(i + 1 + "月龄");
+            horizontalList.add(c);
+        }
+        horizontalAdapter=new HorizontalAdapter(this,horizontalList);
+        horizontalView.setAdapter(horizontalAdapter);
     }
 
     /**
      * horizontalview点击时切换scrollview对应的pager
-     * */
+     */
     private Handler horiHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -143,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * scrollLayout滑动时触发horizontalview文字的颜色和大小渐变效果。
-     * */
+     */
     private Handler touchHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {

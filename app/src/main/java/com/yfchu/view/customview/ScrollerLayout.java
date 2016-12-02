@@ -16,7 +16,7 @@ import android.widget.Scroller;
 import com.yfchu.utils.CommonUtil;
 
 /**
- * Created by Administrator on 2016/11/5.
+ * yfchu 2016/11/5.
  */
 public class ScrollerLayout extends ViewGroup {
 
@@ -316,6 +316,8 @@ public class ScrollerLayout extends ViewGroup {
      * 点击horizonta时更新Scrolllayout
      */
     public void setMovePage(int target) {
+        scaleX = 0.02f;
+        scaleY = 0.03f;
         if (target >= (float) rightBorder / getWidth())
             target = rightBorder / getWidth() - 1;
         else if (target < 0)

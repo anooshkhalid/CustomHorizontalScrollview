@@ -1,6 +1,7 @@
 package com.yfchu.adapter;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,8 +60,8 @@ public class HorizontalAdapter{
             holder.textAge.setScaleY(1.1f);
             holder.textAge.setTabAlpha(1.0f);
         } else {
-            holder.textAge.setScaleX(1.0f);
-            holder.textAge.setScaleY(1.0f);
+            holder.textAge.setScaleX(0.95f);
+            holder.textAge.setScaleY(0.95f);
         }
         return convertView;
     }

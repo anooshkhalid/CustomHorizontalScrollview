@@ -18,7 +18,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.yfchu.adapter.HorizontalAdapter;
+import com.yfchu.adapter.ScrollerAdapter;
 import com.yfchu.entity.HorizontalClass;
+import com.yfchu.entity.ScrollerClass;
 import com.yfchu.view.customview.R;
 import com.yfchu.view.customview.ScrollerLayout;
 import com.yfchu.view.customview.TabItem;
@@ -31,7 +33,9 @@ public class MainActivity extends AppCompatActivity {
 
     private Context context;
     private HorizontalAdapter horizontalAdapter;
+    private ScrollerAdapter scrollAdapter;
     private List<HorizontalClass> horizontalList = new ArrayList<>();
+    private List<ScrollerClass> scrollList = new ArrayList<>();
 
     private TextView line;
     private ScrollerLayout scrollView;
@@ -111,6 +115,29 @@ public class MainActivity extends AppCompatActivity {
         }
         horizontalAdapter=new HorizontalAdapter(this,horizontalList);
         horizontalView.setAdapter(horizontalAdapter);
+
+        for (int i = 0; i < 5; i++) {
+            ScrollerClass s = new ScrollerClass();
+            s.setAge(i + 1 + "月龄接种数据");
+            scrollList.add(s);
+        }
+        scrollAdapter=new ScrollerAdapter(this,scrollList);
+        scrollView.setAdapter(scrollAdapter);
+
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                HorizontalClass c = new HorizontalClass();
+//                c.setAge("6月龄");
+//                horizontalList.add(c);
+//                horizontalAdapter.notifyDataSetChanged(horizontalList,horizontalView);
+//
+//                ScrollerClass s = new ScrollerClass();
+//                s.setAge("6月龄接种数据");
+//                scrollList.add(s);
+//                scrollAdapter.notifyDataSetChanged(scrollList,scrollView);
+//            }
+//        },5000);
     }
 
     /**

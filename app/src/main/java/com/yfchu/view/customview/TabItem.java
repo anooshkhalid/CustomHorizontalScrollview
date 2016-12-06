@@ -102,7 +102,7 @@ public class TabItem extends TextView {
                 height = contentHeight;
                 break;
         }
-        setMeasuredDimension(CommonUtil.convertDpToPx(mContext, 80), CommonUtil.convertDpToPx(mContext, 40));
+        setMeasuredDimension(width, height);
         mViewWidth = getMeasuredWidth();
         mViewHeight = getMeasuredHeight();
     }

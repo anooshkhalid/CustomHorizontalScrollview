@@ -6,14 +6,23 @@ import android.os.Build;
 import android.os.Handler;
 import android.support.v4.view.ViewConfigurationCompat;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Scroller;
+import android.widget.TextView;
 
+import com.yfchu.adapter.HorizontalAdapter;
+import com.yfchu.adapter.ScrollerAdapter;
 import com.yfchu.utils.CommonUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * yfchu 2016/11/5.
@@ -21,6 +30,9 @@ import com.yfchu.utils.CommonUtil;
 public class ScrollerLayout extends ViewGroup {
 
     private Context mContext;
+    private ScrollerLayout contain;
+    private List<View> layoutList = new ArrayList<>();
+    private boolean isAdd = false;
     /**
      * 用于完成滚动操作的实例
      */
@@ -69,7 +81,7 @@ public class ScrollerLayout extends ViewGroup {
     /**
      * 标准滑动翻页距离，快速滑动翻页距离
      */
-    private int scollerNumber = 250, fastScollerNumber = 50;
+    private int scollerNumber = 200, fastScollerNumber = 50;
 
     /**
      * 目标缩放值: 大和小
@@ -84,7 +96,7 @@ public class ScrollerLayout extends ViewGroup {
     /**
      * 缩放基数
      */
-    private float scaleX = 0.002f, scaleY = 0.003f;
+    private float scaleX = 0f, scaleY = 0f;
 
     /**
      * 快速滑动翻页 true为翻页，false不够快速。isPage是否翻页成功
@@ -97,6 +109,10 @@ public class ScrollerLayout extends ViewGroup {
     private VelocityTracker mVelocityTracker;
 
     private Handler mHandler;
+
+    /**
+     * 快速滑动标记
+     */
     public final static int FirstMove = 0x11;
 
     public ScrollerLayout(Context context, AttributeSet attrs) {
@@ -124,24 +140,49 @@ public class ScrollerLayout extends ViewGroup {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
         int childCount = getChildCount();
         for (int i = 0; i < childCount; i++) {
             View childView = getChildAt(i);
             // 为ScrollerLayout中的每一个子控件测量大小
-            measureChild(childView, widthMeasureSpec, heightMeasureSpec);
+            childView.measure(widthMeasureSpec, heightMeasureSpec);
+            //measureChildWithMargins(childView,widthMeasureSpec,widthMeasureSpec,heightMeasureSpec,heightMeasureSpec);
         }
+    }
+
+    /**
+     * 设置数据源
+     */
+    public void setAdapter(ScrollerAdapter adapter) {
+        contain = (ScrollerLayout) this;
+        contain.removeAllViews();
+        for (int i = 0; i < adapter.getCount(); i++) {
+            LinearLayout layout = null;
+            try {
+                layout = (LinearLayout) adapter.getView(i, layoutList.get(i), contain);
+                isAdd = true;
+            } catch (Exception e) {
+                layout = (LinearLayout) adapter.getView(i, null, contain);
+                isAdd = false;
+            }
+            contain.addView(layout);
+            if (isAdd == false) {
+                layoutList.add(layout);
+            }
+        }
+        requestLayout();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        if (changed) {
+        //if (changed) {
             int childCount = getChildCount();
             for (int i = 0; i < childCount; i++) {
                 View childView = getChildAt(i);
                 // 为ScrollerLayout中的每一个子控件在水平方向上进行布局
                 childView.layout(i * childView.getMeasuredWidth() + CommonUtil.convertDpToPx(mContext, pageShowPadding), 0, (i + 1) * childView.getMeasuredWidth() - CommonUtil.convertDpToPx(mContext, pageShowPadding), childView.getMeasuredHeight());
-                if (i == 0) { //默认缩放第一个页面
+                if (i == targetIndex) { //默认缩放第一个页面
                     childView.setScaleX(targetLargeScale);
                     childView.setScaleY(targetLargeScale);
                 } else {
@@ -153,7 +194,7 @@ public class ScrollerLayout extends ViewGroup {
             // 初始化左右边界值
             leftBorder = getChildAt(0).getLeft() - CommonUtil.convertDpToPx(mContext, pageShowPadding);
             rightBorder = getChildAt(getChildCount() - 1).getRight() + CommonUtil.convertDpToPx(mContext, pageShowPadding);
-        }
+        //}
     }
 
     @Override
@@ -170,8 +211,8 @@ public class ScrollerLayout extends ViewGroup {
                     scaleX = 0.006f;
                     scaleY = 0.007f;
                 } else {
-                    scaleX = 0.002f;
-                    scaleY = 0.003f;
+                    scaleX = 0.003f;
+                    scaleY = 0.004f;
                 }
 
                 mXDown = ev.getRawX();
@@ -214,12 +255,10 @@ public class ScrollerLayout extends ViewGroup {
                 ScaleNarrow(targetIndex);
                 scrollBy(scrolledX, 0);
                 mHandler.obtainMessage(MotionEvent.ACTION_MOVE, mXMove).sendToTarget();
-//                Log.i("mHandler", "ACTION_MOVE");
                 mXLastMove = mXMove;
                 break;
             case MotionEvent.ACTION_UP:
                 mVelocityTracker.computeCurrentVelocity(1000);
-//                Log.i("velocityTraker滑动速度", "" + mVelocityTracker.getXVelocity());
                 // 当手指抬起时，根据当前的滚动值来判定应该滚动到哪个子控件的界面
 //                int targetIndex = (int) ((getScrollX() + getWidth() / 2) / getWidth());
 //                int dx = targetIndex * getWidth() - getScrollX();

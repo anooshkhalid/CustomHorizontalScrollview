@@ -23,11 +23,13 @@ public class TabItem extends TextView {
     private int mTextColorNormal = 0xff777777;
     private Paint mTextPaintNormal;
     private Paint mTextPaintSelect;
-    private int mViewHeight, mViewWidth;
+    private int mViewHeight,mViewWidth;
     private String mTextValue = "";
-    private Bitmap mIconNormal;
-    private Bitmap mIconSelect;
     private Rect mBoundText;
+
+    public int getmViewWidth() {
+        return mViewWidth;
+    }
 
     public TabItem(Context context) {
         this(context, null);
@@ -109,15 +111,7 @@ public class TabItem extends TextView {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        drawBitmap(canvas);
         drawText(canvas);
-    }
-
-    private void drawBitmap(Canvas canvas) {
-//        int left = (mViewWidth - mIconNormal.getWidth())/2 ;
-//        int top = (mViewHeight - mIconNormal.getHeight() - mBoundText.height()) /2 ;
-//        canvas.drawBitmap(mIconNormal, left, top ,mIconPaintNormal);
-//        canvas.drawBitmap(mIconSelect, left, top , mIconPaintSelect);
     }
 
     private void drawText(Canvas canvas) {
@@ -150,16 +144,8 @@ public class TabItem extends TextView {
         this.mTextValue = TextValue;
     }
 
-    public void setIconText(int[] iconSelId, String TextValue) {
-        this.mIconSelect = BitmapFactory.decodeResource(getResources(), iconSelId[0]);
-        this.mIconNormal = BitmapFactory.decodeResource(getResources(), iconSelId[1]);
-        this.mTextValue = TextValue;
-    }
-
     public void setTabAlpha(float alpha) {
         int paintAlpha = (int) (alpha * 255);
-//        mIconPaintSelect.setAlpha(paintAlpha);
-//        mIconPaintNormal.setAlpha(255-paintAlpha);
         mTextPaintSelect.setAlpha(paintAlpha);
         mTextPaintNormal.setAlpha(255 - paintAlpha);
         invalidate();

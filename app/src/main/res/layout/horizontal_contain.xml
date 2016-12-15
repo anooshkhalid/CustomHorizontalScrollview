@@ -5,7 +5,7 @@
 
     <com.yfchu.view.customview.TabItem
         android:id="@+id/tabTxt"
-        android:layout_width="80dp"
+        android:layout_width="70dp"
         android:layout_height="40dp"
         android:textColor="#bfbfbf"
         android:textSize="20sp" />

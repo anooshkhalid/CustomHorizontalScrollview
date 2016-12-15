@@ -5,10 +5,12 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.Scroller;
 import android.widget.TextView;
 
 import com.yfchu.adapter.HorizontalAdapter;
@@ -23,14 +25,41 @@ import java.util.List;
 public class HorizontalView extends HorizontalScrollView {
 
     private Context mContext;
+    private Scroller mScroller;
+    private Handler mHandler;
+
     private LinearLayout contain;
     private TabItem lastTextView;
     private List<TabItem> textViewList = new ArrayList<>();
     private List<View> layoutList = new ArrayList<>();
 
     private boolean isAdd = false;
-    private int initNum = 0;
-    private Handler mHandler;
+    private int currX;
+    private int mViewWidth;
+    private int startScroll, endScroll;
+
+    /**
+     * 点击滚动ScrollView
+     * */
+    public static final int SCROLL_ROLL = 0x01;
+
+    /**
+     * 发送宽度数据
+     * */
+    public static final int SETDATA = 0x02;
+
+    public int getmViewWidth() {
+        return mViewWidth;
+    }
+
+    public int getmTabItemWidth() {
+        return textViewList.get(0).getmViewWidth();
+    }
+
+    public void setStartScroll(int startScroll, int endScroll) {
+        this.startScroll = startScroll;
+        this.endScroll = endScroll;
+    }
 
     public HorizontalView(Context context) {
         super(context);
@@ -40,6 +69,7 @@ public class HorizontalView extends HorizontalScrollView {
     public HorizontalView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
+        mScroller = new Scroller(mContext);
     }
 
     public HorizontalView(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -62,44 +92,9 @@ public class HorizontalView extends HorizontalScrollView {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-//        if (initNum < 1) {
-//            init();
-//            initNum++;
-//        }
+        mViewWidth = getMeasuredWidth();
+        mHandler.obtainMessage(SETDATA, mViewWidth, getmTabItemWidth()).sendToTarget();
     }
-
-//    private void init() {
-//        contain = (LinearLayout) getChildAt(0);
-//        for (int i = 0; i < 5; i++) {
-//            TabItem horizontal_contain = (TabItem) LayoutInflater.from(mContext).inflate(R.layout.horizontal_contain, null);
-//            horizontal_contain.setId(i);
-//            horizontal_contain.setTextValue(i + 1 + "月龄");
-//            horizontal_contain.setTextColorSelect(getResources().getColor(R.color.textSelectColor));
-//            horizontal_contain.setTextColorNormal(getResources().getColor(R.color.textColor));
-////            horizontal_contain.setTextSize(smallTextSize);
-//            if (i == 0) {
-////                horizontal_contain.setTextSize(normalTextSize);
-//                horizontal_contain.setScaleX(1.1f);
-//                horizontal_contain.setScaleY(1.1f);
-//                horizontal_contain.setTabAlpha(1.0f);
-//                lastTextView = horizontal_contain;
-//            } else {
-//                horizontal_contain.setScaleX(1.0f);
-//                horizontal_contain.setScaleY(1.0f);
-//            }
-//            horizontal_contain.setOnClickListener(new OnClickListener());
-//            contain.addView(horizontal_contain);
-//
-//            TextView line = new TextView(mContext);
-//            line.setWidth(1);
-//            line.setHeight(CommonUtil.convertDpToPx(mContext, 20));
-//            line.setGravity(Gravity.CENTER_VERTICAL);
-//            line.setBackgroundColor(mContext.getResources().getColor(R.color.line));
-//            contain.addView(line);
-//
-//            textViewList.add(horizontal_contain);
-//        }
-//    }
 
     /**
      * 设置数据源
@@ -113,7 +108,7 @@ public class HorizontalView extends HorizontalScrollView {
                 layout = (LinearLayout) adapter.getView(i, layoutList.get(i), contain, lastTextView.getId());
                 isAdd = true;
             } catch (Exception e) {
-                layout = (LinearLayout) adapter.getView(i, null, contain,0);
+                layout = (LinearLayout) adapter.getView(i, null, contain, 0);
                 isAdd = false;
                 if (i == 0)
                     lastTextView = (TabItem) layout.getChildAt(0);
@@ -148,36 +143,10 @@ public class HorizontalView extends HorizontalScrollView {
             anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-//                    if (textSelectAlpha > 0.3)
-//                        lastTextView.setTabAlpha(textSelectAlpha -= 0.1f);
-//                    Log.i("textSelectAlpha", "textSelectAlpha:" + textSelectAlpha);
                     if ((Float) animation.getAnimatedValue() >= 1.0f)
                         lastTextView.setTabAlpha(((Float) animation.getAnimatedValue() - 1.0f) * 10);
                     lastTextView.setScaleX((Float) animation.getAnimatedValue());
                     lastTextView.setScaleY((Float) animation.getAnimatedValue());
-                }
-            });
-            anim.addListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-//                    lastTextView.setTabAlpha(textSelectAlpha -= 0.1f);
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-//                    lastTextView.setTabAlpha(textSelectAlpha = 0f);
-//                    Log.i("textSelectAlpha", "textSelectAlpha:" + textSelectAlpha);
-//                    textSelectAlpha = 1f;
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-
                 }
             });
             ValueAnimator anim1 = ValueAnimator.ofFloat(0.95f, 1.1f);
@@ -186,9 +155,6 @@ public class HorizontalView extends HorizontalScrollView {
             anim1.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-//                    if (textNormalAlpha < 0.7)
-//                        ((TabItem) v).setTabAlpha(textNormalAlpha += 0.1f);
-//                    Log.i("textNormalAlpha", "textNormalAlpha:" + textNormalAlpha);
                     if ((Float) animation.getAnimatedValue() >= 1.0f)
                         ((TabItem) v).setTabAlpha(((Float) animation.getAnimatedValue() - 1.0f) * 10);
                     ((TabItem) v).setScaleX((Float) animation.getAnimatedValue());
@@ -198,17 +164,38 @@ public class HorizontalView extends HorizontalScrollView {
             anim1.addListener(new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationStart(Animator animation) {
-//                    ((TabItem) v).setTabAlpha(textNormalAlpha += 0.1f);
                 }
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    if (mHandler != null)
-                        mHandler.sendEmptyMessage(v.getId());
+                    if (mHandler != null) {
+                        mHandler.obtainMessage(SCROLL_ROLL, v.getId(), 0).sendToTarget();
+                        if (lastTextView.getId() < ((TabItem) v).getId()
+                                && ((TabItem) v).getId() - lastTextView.getId() == 1 && ((TabItem) v).getId() >= startScroll) {
+                            if (((TabItem) v).getId() == startScroll)
+                                ScrollBy(0, getmTabItemWidth());
+                            else
+                                ScrollBy(getmTabItemWidth());
+                        } else if (lastTextView.getId() > ((TabItem) v).getId()
+                                && lastTextView.getId() - ((TabItem) v).getId() == 1 && ((TabItem) v).getId() <= endScroll) {
+                            if (((TabItem) v).getId() == endScroll)
+                                ScrollBy((endScroll - 1) * getmTabItemWidth(), -getmTabItemWidth());
+                            else
+                                ScrollBy(-getmTabItemWidth());
+                        } else if (lastTextView.getId() < ((TabItem) v).getId() && ((TabItem) v).getId() >= startScroll) {
+                            currX = v.getId() * getmTabItemWidth() - (v.getId() - lastTextView.getId()) * getmTabItemWidth()
+                                    - (startScroll - 1) * getmTabItemWidth();
+                            ScrollBy((v.getId() - lastTextView.getId()) * getmTabItemWidth());
+                            if (currX >= textViewList.size() * getmTabItemWidth())
+                                currX = textViewList.size() * getmTabItemWidth();
+                        } else if (lastTextView.getId() > ((TabItem) v).getId() && ((TabItem) v).getId() <= endScroll) {
+                            currX = lastTextView.getId() * getmTabItemWidth() - (startScroll - 1) * getmTabItemWidth();
+                            ScrollBy(-((lastTextView.getId() - ((TabItem) v).getId()) * getmTabItemWidth()));
+                            if (currX <= 0) currX = 0;
+                        }
+                    }
+                    invalidate();
                     lastTextView = (TabItem) v;
-//                    ((TabItem) v).setTabAlpha(textNormalAlpha = 1.0f);
-//                    Log.i("textNormalAlpha", "textNormalAlpha:" + textNormalAlpha);
-//                    textNormalAlpha = 0f;
                 }
 
                 @Override
@@ -220,6 +207,26 @@ public class HorizontalView extends HorizontalScrollView {
                 }
             });
 
+        }
+    }
+
+    public void ScrollBy(int startX, int endX) {
+        mScroller.startScroll(startX, 0, endX, 0, 1000);
+        invalidate();
+    }
+
+    public void ScrollBy(int endX) {
+        mScroller.startScroll(currX, 0, endX, 0, 1000);
+        invalidate();
+    }
+
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+        if (mScroller.computeScrollOffset()) {
+            scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
+            currX = mScroller.getCurrX();
+            invalidate();
         }
     }
 }

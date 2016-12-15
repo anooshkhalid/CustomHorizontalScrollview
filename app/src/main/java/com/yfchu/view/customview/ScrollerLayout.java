@@ -7,7 +7,6 @@ import android.os.Handler;
 import android.support.v4.view.ViewConfigurationCompat;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -15,9 +14,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Scroller;
-import android.widget.TextView;
 
-import com.yfchu.adapter.HorizontalAdapter;
 import com.yfchu.adapter.ScrollerAdapter;
 import com.yfchu.utils.CommonUtil;
 
@@ -81,7 +78,7 @@ public class ScrollerLayout extends ViewGroup {
     /**
      * 标准滑动翻页距离，快速滑动翻页距离
      */
-    private int scollerNumber = 200, fastScollerNumber = 50;
+    private int scollerNumber = 200;
 
     /**
      * 目标缩放值: 大和小
@@ -108,12 +105,15 @@ public class ScrollerLayout extends ViewGroup {
      */
     private VelocityTracker mVelocityTracker;
 
+    /**
+     * Main的Handler传过来
+     * */
     private Handler mHandler;
 
     /**
      * 快速滑动标记
      */
-    public final static int FirstMove = 0x11;
+    public final static int FASTMOVE = 0x11;
 
     public ScrollerLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -133,10 +133,6 @@ public class ScrollerLayout extends ViewGroup {
         return targetIndex;
     }
 
-    public int getLastIndex() {
-        return lastIndex;
-    }
-
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -146,7 +142,6 @@ public class ScrollerLayout extends ViewGroup {
             View childView = getChildAt(i);
             // 为ScrollerLayout中的每一个子控件测量大小
             childView.measure(widthMeasureSpec, heightMeasureSpec);
-            //measureChildWithMargins(childView,widthMeasureSpec,widthMeasureSpec,heightMeasureSpec,heightMeasureSpec);
         }
     }
 
@@ -224,7 +219,7 @@ public class ScrollerLayout extends ViewGroup {
                 float diff = Math.abs(mXMove - mXDown);
                 mXLastMove = mXMove;
                 // 当手指拖动值大于TouchSlop值时，认为应该进行滚动，拦截子控件的事件
-                if (diff > mTouchSlop) {
+                if (diff > 1) {
                     return true;
                 }
                 break;
@@ -236,6 +231,10 @@ public class ScrollerLayout extends ViewGroup {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
+                if (mVelocityTracker != null) {
+                    mVelocityTracker.recycle();
+                    mVelocityTracker = null;
+                }
                 if (mVelocityTracker == null) {
                     mVelocityTracker = VelocityTracker.obtain();
                 }
@@ -258,7 +257,6 @@ public class ScrollerLayout extends ViewGroup {
                 mXLastMove = mXMove;
                 break;
             case MotionEvent.ACTION_UP:
-                mVelocityTracker.computeCurrentVelocity(1000);
                 // 当手指抬起时，根据当前的滚动值来判定应该滚动到哪个子控件的界面
 //                int targetIndex = (int) ((getScrollX() + getWidth() / 2) / getWidth());
 //                int dx = targetIndex * getWidth() - getScrollX();
@@ -266,11 +264,12 @@ public class ScrollerLayout extends ViewGroup {
 //                mScroller.startScroll(getScrollX(), 0, dx, 0);
 //                invalidate();
 
+                mVelocityTracker.computeCurrentVelocity(1000);
                 if (mXDown - mXLastMove > CommonUtil.convertDpToPx(mContext, scollerNumber)) {
                     pageAdd(0);
                 } else if (mXDown - mXLastMove < CommonUtil.convertDpToPx(mContext, -scollerNumber)) {
                     pageAdd(1);
-                } else if (Math.abs(mVelocityTracker.getXVelocity()) > 1500 && pageEnd == true) {
+                } else if (Math.abs(mVelocityTracker.getXVelocity()) > 200 && pageEnd == true) {
                     scaleX = 0.02f;
                     scaleY = 0.03f;
                     if (mXDown - mXLastMove > 0) {
@@ -284,19 +283,14 @@ public class ScrollerLayout extends ViewGroup {
                 else if (targetIndex < 0)
                     targetIndex = 0;
                 int dx = targetIndex * getWidth() - getScrollX();
+
                 // 第二步，调用startScroll()方法来初始化滚动数据并刷新界面
                 mScroller.startScroll(getScrollX(), 0, dx, 0);
                 invalidate();
                 if (scaleX == 0.02f)
-                    mHandler.obtainMessage(FirstMove, MotionEvent.ACTION_UP).sendToTarget();
+                    mHandler.obtainMessage(FASTMOVE, MotionEvent.ACTION_UP).sendToTarget();
                 else
                     mHandler.obtainMessage(MotionEvent.ACTION_UP, MotionEvent.ACTION_UP).sendToTarget();
-                break;
-            case MotionEvent.ACTION_CANCEL:
-                if (mVelocityTracker != null) {
-                    mVelocityTracker.recycle();
-                    mVelocityTracker = null;
-                }
                 break;
         }
         return super.onTouchEvent(event);

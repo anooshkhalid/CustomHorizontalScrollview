@@ -170,6 +170,7 @@ public class HorizontalView extends HorizontalScrollView {
                 public void onAnimationEnd(Animator animation) {
                     if (mHandler != null) {
                         mHandler.obtainMessage(SCROLL_ROLL, v.getId(), 0).sendToTarget();
+                        Log.i("yfchu",getScrollX()+"");
                         if (lastTextView.getId() < ((TabItem) v).getId()
                                 && ((TabItem) v).getId() - lastTextView.getId() == 1 && ((TabItem) v).getId() >= startScroll) {
                             if (((TabItem) v).getId() == startScroll)

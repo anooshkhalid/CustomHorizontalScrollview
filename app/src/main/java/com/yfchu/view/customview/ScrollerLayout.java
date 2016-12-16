@@ -231,10 +231,6 @@ public class ScrollerLayout extends ViewGroup {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
-                if (mVelocityTracker != null) {
-                    mVelocityTracker.recycle();
-                    mVelocityTracker = null;
-                }
                 if (mVelocityTracker == null) {
                     mVelocityTracker = VelocityTracker.obtain();
                 }
@@ -291,6 +287,12 @@ public class ScrollerLayout extends ViewGroup {
                     mHandler.obtainMessage(FASTMOVE, MotionEvent.ACTION_UP).sendToTarget();
                 else
                     mHandler.obtainMessage(MotionEvent.ACTION_UP, MotionEvent.ACTION_UP).sendToTarget();
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                if (mVelocityTracker != null) {
+                    mVelocityTracker.recycle();
+                    mVelocityTracker = null;
+                }
                 break;
         }
         return super.onTouchEvent(event);

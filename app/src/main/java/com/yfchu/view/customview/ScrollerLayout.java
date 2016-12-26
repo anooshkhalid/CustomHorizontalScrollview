@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.Scroller;
 
 import com.yfchu.adapter.ScrollerAdapter;
+import com.yfchu.utils.CommonUrl;
 import com.yfchu.utils.CommonUtil;
 
 import java.util.ArrayList;
@@ -109,11 +110,6 @@ public class ScrollerLayout extends ViewGroup {
      * Main的Handler传过来
      * */
     private Handler mHandler;
-
-    /**
-     * 快速滑动标记
-     */
-    public final static int FASTMOVE = 0x11;
 
     public ScrollerLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -284,7 +280,7 @@ public class ScrollerLayout extends ViewGroup {
                 mScroller.startScroll(getScrollX(), 0, dx, 0);
                 invalidate();
                 if (scaleX == 0.02f)
-                    mHandler.obtainMessage(FASTMOVE, MotionEvent.ACTION_UP).sendToTarget();
+                    mHandler.obtainMessage(CommonUrl.FASTMOVE, MotionEvent.ACTION_UP).sendToTarget();
                 else
                     mHandler.obtainMessage(MotionEvent.ACTION_UP, MotionEvent.ACTION_UP).sendToTarget();
                 break;

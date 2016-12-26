@@ -14,6 +14,7 @@ import android.widget.Scroller;
 import android.widget.TextView;
 
 import com.yfchu.adapter.HorizontalAdapter;
+import com.yfchu.utils.CommonUrl;
 import com.yfchu.utils.CommonUtil;
 
 import java.util.ArrayList;
@@ -37,20 +38,6 @@ public class HorizontalView extends HorizontalScrollView {
     private int currX;
     private int mViewWidth;
     private int startScroll, endScroll;
-
-    /**
-     * 点击滚动ScrollView
-     * */
-    public static final int SCROLL_ROLL = 0x01;
-
-    /**
-     * 发送宽度数据
-     * */
-    public static final int SETDATA = 0x02;
-
-    public int getmViewWidth() {
-        return mViewWidth;
-    }
 
     public int getmTabItemWidth() {
         return textViewList.get(0).getmViewWidth();
@@ -93,7 +80,7 @@ public class HorizontalView extends HorizontalScrollView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         mViewWidth = getMeasuredWidth();
-        mHandler.obtainMessage(SETDATA, mViewWidth, getmTabItemWidth()).sendToTarget();
+        mHandler.obtainMessage(CommonUrl.SETDATA, mViewWidth, getmTabItemWidth()).sendToTarget();
     }
 
     /**
@@ -169,7 +156,7 @@ public class HorizontalView extends HorizontalScrollView {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     if (mHandler != null) {
-                        mHandler.obtainMessage(SCROLL_ROLL, v.getId(), 0).sendToTarget();
+                        mHandler.obtainMessage(CommonUrl.SCROLL_ROLL, v.getId(), 0).sendToTarget();
                         Log.i("yfchu",getScrollX()+"");
                         if (lastTextView.getId() < ((TabItem) v).getId()
                                 && ((TabItem) v).getId() - lastTextView.getId() == 1 && ((TabItem) v).getId() >= startScroll) {

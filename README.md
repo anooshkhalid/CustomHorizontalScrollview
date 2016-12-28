@@ -6,7 +6,7 @@ ViewPager是重写ViewGroup实现的卡片页， 滑动的过渡效果。
 
 ![image](https://github.com/yfchu/CustomHorizontalScrollview/blob/master/Effect/xiaoguo.gif)   
 ![image](https://github.com/yfchu/CustomHorizontalScrollview/blob/master/Effect/xiaoguo1.jpg)  
-
+```java  
 /**
      * horizontalview点击时切换scrollview对应的pager
      */
@@ -93,3 +93,6 @@ ViewPager是重写ViewGroup实现的卡片页， 滑动的过渡效果。
             super.handleMessage(msg);
         }
     };
+	
+  
+```

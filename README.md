@@ -4,7 +4,7 @@
 HorizontalView 实现了ViewPager滑动同时其内部text颜色渐变、字体缓慢变大、下标跟随及下标长度变化。
 ViewPager是重写ViewGroup实现的卡片页， 滑动的过渡效果。
 
-![image](https://github.com/yfchu/CustomHorizontalScrollview/blob/master/Effect/xiaoguo.gif)   
+![image](https://github.com/yfchu/CustomHorizontalScrollview/blob/master/Effect/xiaoguo2.gif)   
 ![image](https://github.com/yfchu/CustomHorizontalScrollview/blob/master/Effect/xiaoguo1.jpg)  
 ```java  
 /**

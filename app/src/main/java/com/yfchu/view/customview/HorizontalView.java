@@ -5,7 +5,6 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.HorizontalScrollView;
@@ -31,16 +30,26 @@ public class HorizontalView extends HorizontalScrollView {
 
     private LinearLayout contain;
     private TabItem lastTextView;
+    private View LineView;
     private List<TabItem> textViewList = new ArrayList<>();
     private List<View> layoutList = new ArrayList<>();
 
+    /**
+     * 更新数据源
+     */
     private boolean isAdd = false;
+    /**
+     * 当前x坐标
+     */
     private int currX;
+    /**
+     * Horizontalview宽
+     */
     private int mViewWidth;
     private int startScroll, endScroll;
 
-    public int getmTabItemWidth() {
-        return textViewList.get(0).getmViewWidth();
+    public int getTabItemWidth() {
+        return textViewList.get(0).getViewWidth();
     }
 
     public void setStartScroll(int startScroll, int endScroll) {
@@ -76,18 +85,22 @@ public class HorizontalView extends HorizontalScrollView {
         return textViewList;
     }
 
+    public View getLineView() {
+        return LineView;
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         mViewWidth = getMeasuredWidth();
-        mHandler.obtainMessage(CommonUrl.SETDATA, mViewWidth, getmTabItemWidth()).sendToTarget();
+        mHandler.obtainMessage(CommonUrl.SETDATA, mViewWidth, getTabItemWidth()).sendToTarget();
     }
 
     /**
      * 设置数据源
      */
     public void setAdapter(HorizontalAdapter adapter) {
-        contain = (LinearLayout) getChildAt(0);
+        contain = (LinearLayout) ((LinearLayout) getChildAt(0)).getChildAt(0);
         contain.removeAllViews();
         for (int i = 0; i < adapter.getCount(); i++) {
             LinearLayout layout = null;
@@ -97,8 +110,12 @@ public class HorizontalView extends HorizontalScrollView {
             } catch (Exception e) {
                 layout = (LinearLayout) adapter.getView(i, null, contain, 0);
                 isAdd = false;
-                if (i == 0)
+                if (i == 0) {
                     lastTextView = (TabItem) layout.getChildAt(0);
+                    LinearLayout view = (LinearLayout) inflate(mContext, R.layout.line_view, null);
+                    LineView= view.getChildAt(0);
+                    ((LinearLayout) getChildAt(0)).addView(view);
+                }
             }
             contain.addView(layout);
             if (i + 1 != adapter.getCount()) {
@@ -157,28 +174,27 @@ public class HorizontalView extends HorizontalScrollView {
                 public void onAnimationEnd(Animator animation) {
                     if (mHandler != null) {
                         mHandler.obtainMessage(CommonUrl.SCROLL_ROLL, v.getId(), 0).sendToTarget();
-                        Log.i("yfchu",getScrollX()+"");
                         if (lastTextView.getId() < ((TabItem) v).getId()
                                 && ((TabItem) v).getId() - lastTextView.getId() == 1 && ((TabItem) v).getId() >= startScroll) {
                             if (((TabItem) v).getId() == startScroll)
-                                ScrollBy(0, getmTabItemWidth());
+                                ScrollBy(0, getTabItemWidth());
                             else
-                                ScrollBy(getmTabItemWidth());
+                                ScrollBy(getTabItemWidth());
                         } else if (lastTextView.getId() > ((TabItem) v).getId()
                                 && lastTextView.getId() - ((TabItem) v).getId() == 1 && ((TabItem) v).getId() <= endScroll) {
                             if (((TabItem) v).getId() == endScroll)
-                                ScrollBy((endScroll - 1) * getmTabItemWidth(), -getmTabItemWidth());
+                                ScrollBy((endScroll - 1) * getTabItemWidth(), -getTabItemWidth());
                             else
-                                ScrollBy(-getmTabItemWidth());
+                                ScrollBy(-getTabItemWidth());
                         } else if (lastTextView.getId() < ((TabItem) v).getId() && ((TabItem) v).getId() >= startScroll) {
-                            currX = v.getId() * getmTabItemWidth() - (v.getId() - lastTextView.getId()) * getmTabItemWidth()
-                                    - (startScroll - 1) * getmTabItemWidth();
-                            ScrollBy((v.getId() - lastTextView.getId()) * getmTabItemWidth());
-                            if (currX >= textViewList.size() * getmTabItemWidth())
-                                currX = textViewList.size() * getmTabItemWidth();
+                            currX = v.getId() * getTabItemWidth() - (v.getId() - lastTextView.getId()) * getTabItemWidth()
+                                    - (startScroll - 1) * getTabItemWidth();
+                            ScrollBy((v.getId() - lastTextView.getId()) * getTabItemWidth());
+                            if (currX >= textViewList.size() * getTabItemWidth())
+                                currX = textViewList.size() * getTabItemWidth();
                         } else if (lastTextView.getId() > ((TabItem) v).getId() && ((TabItem) v).getId() <= endScroll) {
-                            currX = lastTextView.getId() * getmTabItemWidth() - (startScroll - 1) * getmTabItemWidth();
-                            ScrollBy(-((lastTextView.getId() - ((TabItem) v).getId()) * getmTabItemWidth()));
+                            currX = lastTextView.getId() * getTabItemWidth() - (startScroll - 1) * getTabItemWidth();
+                            ScrollBy(-((lastTextView.getId() - ((TabItem) v).getId()) * getTabItemWidth()));
                             if (currX <= 0) currX = 0;
                         }
                     }

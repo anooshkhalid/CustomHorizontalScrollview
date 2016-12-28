@@ -27,7 +27,7 @@ public class TabItem extends TextView {
     private String mTextValue = "";
     private Rect mBoundText;
 
-    public int getmViewWidth() {
+    public int getViewWidth() {
         return mViewWidth;
     }
 
@@ -115,8 +115,10 @@ public class TabItem extends TextView {
     }
 
     private void drawText(Canvas canvas) {
-        float x = (mViewWidth - mBoundText.width() - getPaddingLeft() - getPaddingRight()) / 2.0f - 2;
-        float y = (mViewHeight + mBoundText.height() + getPaddingTop() + getPaddingBottom()) / 2.0f - 2;//(mViewHeight + mIconNormal.getHeight() + mBoundText.height()) /2.0F ;
+        float x = (mViewWidth - mBoundText.width()) / 2.0f;
+        float y = (mViewHeight + mBoundText.height()) / 2.0f;//(mViewHeight + mIconNormal.getHeight() + mBoundText.height()) /2.0F ;
+//        float x = (mViewWidth - mBoundText.width() - getPaddingLeft() - getPaddingRight()) / 2.0f - 2;
+//        float y = (mViewHeight + mBoundText.height() + getPaddingTop() + getPaddingBottom()) / 2.0f - 2;
         canvas.drawText(mTextValue, x, y, mTextPaintNormal);
         canvas.drawText(mTextValue, x, y, mTextPaintSelect);
     }

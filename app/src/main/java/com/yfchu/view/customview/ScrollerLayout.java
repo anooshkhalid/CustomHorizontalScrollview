@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.Scroller;
 
 import com.yfchu.adapter.ScrollerAdapter;
+import com.yfchu.interfaces.ScrollInterface;
 import com.yfchu.utils.CommonUrl;
 import com.yfchu.utils.CommonUtil;
 
@@ -108,7 +109,7 @@ public class ScrollerLayout extends ViewGroup {
 
     /**
      * Main的Handler传过来
-     * */
+     */
     private Handler mHandler;
 
     public ScrollerLayout(Context context, AttributeSet attrs) {
@@ -168,23 +169,23 @@ public class ScrollerLayout extends ViewGroup {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         //if (changed) {
-            int childCount = getChildCount();
-            for (int i = 0; i < childCount; i++) {
-                View childView = getChildAt(i);
-                // 为ScrollerLayout中的每一个子控件在水平方向上进行布局
-                childView.layout(i * childView.getMeasuredWidth() + CommonUtil.convertDpToPx(mContext, pageShowPadding), 0, (i + 1) * childView.getMeasuredWidth() - CommonUtil.convertDpToPx(mContext, pageShowPadding), childView.getMeasuredHeight());
-                if (i == targetIndex) { //默认缩放第一个页面
-                    childView.setScaleX(targetLargeScale);
-                    childView.setScaleY(targetLargeScale);
-                } else {
-                    childView.setScaleX(targetSmallScale);
-                    childView.setScaleY(targetSmallScaleY);
-                }
-                childView.setOnClickListener(null);//为非button添加点击事件
+        int childCount = getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            View childView = getChildAt(i);
+            // 为ScrollerLayout中的每一个子控件在水平方向上进行布局
+            childView.layout(i * childView.getMeasuredWidth() + CommonUtil.convertDpToPx(mContext, pageShowPadding), 0, (i + 1) * childView.getMeasuredWidth() - CommonUtil.convertDpToPx(mContext, pageShowPadding), childView.getMeasuredHeight());
+            if (i == targetIndex) { //默认缩放第一个页面
+                childView.setScaleX(targetLargeScale);
+                childView.setScaleY(targetLargeScale);
+            } else {
+                childView.setScaleX(targetSmallScale);
+                childView.setScaleY(targetSmallScaleY);
             }
-            // 初始化左右边界值
-            leftBorder = getChildAt(0).getLeft() - CommonUtil.convertDpToPx(mContext, pageShowPadding);
-            rightBorder = getChildAt(getChildCount() - 1).getRight() + CommonUtil.convertDpToPx(mContext, pageShowPadding);
+            childView.setOnClickListener(null);//为非button添加点击事件
+        }
+        // 初始化左右边界值
+        leftBorder = getChildAt(0).getLeft() - CommonUtil.convertDpToPx(mContext, pageShowPadding);
+        rightBorder = getChildAt(getChildCount() - 1).getRight() + CommonUtil.convertDpToPx(mContext, pageShowPadding);
         //}
     }
 
@@ -222,7 +223,6 @@ public class ScrollerLayout extends ViewGroup {
         }
         return super.onInterceptTouchEvent(ev);
     }
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {

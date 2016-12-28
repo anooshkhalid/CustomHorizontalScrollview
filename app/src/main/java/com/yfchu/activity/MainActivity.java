@@ -7,15 +7,15 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.LinearLayout;
 
 import com.yfchu.adapter.HorizontalAdapter;
 import com.yfchu.adapter.ScrollerAdapter;
 import com.yfchu.entity.HorizontalClass;
 import com.yfchu.entity.ScrollerClass;
+import com.yfchu.interfaces.ScrollInterface;
 import com.yfchu.utils.CommonUrl;
-import com.yfchu.utils.CommonUtil;
 import com.yfchu.view.customview.R;
 import com.yfchu.view.customview.ScrollerLayout;
 import com.yfchu.view.customview.TabItem;
@@ -33,7 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private List<ScrollerClass> scrollList = new ArrayList<>();
     private List<TabItem> textViewList;
 
-    private TextView line;
+    private View lineView;
+    private LinearLayout.LayoutParams lineViewParams;
     private ScrollerLayout scrollView;
     private HorizontalView horizontalView;
 
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
      * mXDown：手机按下时的屏幕坐标
      * XMove：滑动坐标
      */
-    private float mXDown, mXMove;
+    private float mXDown, mXMove, mOldXMove = 0;
 
     private int mHorizontalViewWidth, mTabItemWidth, pageItemNumber, startScroll, endScroll;
 
@@ -86,17 +87,11 @@ public class MainActivity extends AppCompatActivity {
      * 初始化控件
      */
     private void init() {
-        line = (TextView) findViewById(R.id.line);
-        RelativeLayout.LayoutParams rl = (RelativeLayout.LayoutParams) line.getLayoutParams();
-        rl.height = 1;
-        line.setLayoutParams(rl);
-
         horizontalView = (HorizontalView) findViewById(R.id.horizontal);
         scrollView = (ScrollerLayout) findViewById(R.id.scrollView);
 
         scrollView.setHandler(touchHandler);
         horizontalView.setHandler(horiHandler);
-        textViewList = horizontalView.getTextViewList();
 
         mTouchSlop = scrollView.getTouchSlop();
         if (mTouchSlop < 80) {
@@ -107,11 +102,16 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = 0; i < 10; i++) {
             HorizontalClass c = new HorizontalClass();
-            c.setAge(i + 1 + "月龄");
+            if (i % 2 == 0)
+                c.setAge(i + 1 + "月龄");
+            else
+                c.setAge(i + 1 + "+月龄");
             horizontalList.add(c);
         }
         horizontalAdapter = new HorizontalAdapter(this, horizontalList);
         horizontalView.setAdapter(horizontalAdapter);
+        textViewList = horizontalView.getTextViewList();
+        lineView = horizontalView.getLineView();
 
         for (int i = 0; i < 10; i++) {
             ScrollerClass s = new ScrollerClass();
@@ -120,21 +120,6 @@ public class MainActivity extends AppCompatActivity {
         }
         scrollAdapter = new ScrollerAdapter(this, scrollList);
         scrollView.setAdapter(scrollAdapter);
-
-//        new Handler().postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                HorizontalClass c = new HorizontalClass();
-//                c.setAge("6月龄");
-//                horizontalList.add(c);
-//                horizontalAdapter.notifyDataSetChanged(horizontalList,horizontalView);
-//
-//                ScrollerClass s = new ScrollerClass();
-//                s.setAge("6月龄接种数据");
-//                scrollList.add(s);
-//                scrollAdapter.notifyDataSetChanged(scrollList,scrollView);
-//            }
-//        },5000);
     }
 
     /**
@@ -145,14 +130,19 @@ public class MainActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case CommonUrl.SCROLL_ROLL:
-                    scrollView.setMovePage(msg.arg1);
+                    scrollView.setMovePage(msg.arg1);//点击item切换Scrollview
+                    CursorFollow();
                     break;
                 case CommonUrl.SETDATA:
-                    mHorizontalViewWidth = msg.arg1;
-                    mTabItemWidth = msg.arg2;
-                    pageItemNumber = mHorizontalViewWidth / mTabItemWidth;
-                    startScroll = pageItemNumber / 2 + pageItemNumber % 2;
-                    endScroll = textViewList.size() - pageItemNumber + startScroll;
+                    int width = 0;
+                    for (int i = 0; i < textViewList.size(); i++) {
+                        width += textViewList.get(i).getViewWidth();
+                    }
+                    mHorizontalViewWidth = msg.arg1;//屏幕宽度
+                    mTabItemWidth = width / textViewList.size();//item宽度
+                    pageItemNumber = mHorizontalViewWidth / mTabItemWidth;//页显示item数量
+                    startScroll = pageItemNumber / 2 + pageItemNumber % 2;//起始滚动item
+                    endScroll = textViewList.size() - pageItemNumber + startScroll;//结束滚动item
                     horizontalView.setStartScroll(startScroll, endScroll);
                     break;
             }
@@ -181,6 +171,18 @@ public class MainActivity extends AppCompatActivity {
                     textNormalScale = faultNormalScale;
                     break;
                 case MotionEvent.ACTION_MOVE:
+                    if (mXMove > mOldXMove && mOldXMove != 0)
+                        lineView.setTranslationX(lineView.getTranslationX() - 1);
+                    else {
+                        if (mOldXMove == 0) {
+                            if (mXMove > mXDown)
+                                lineView.setTranslationX(lineView.getTranslationX() - 1);
+                            else
+                                lineView.setTranslationX(lineView.getTranslationX() + 1);
+                        } else
+                            lineView.setTranslationX(lineView.getTranslationX() + 1);
+                    }
+                    mOldXMove = mXMove;
                     float temp1 = (float) (textViewList.get(Index).getSelectAlpha() / 25.5 / 10);
                     if (temp1 <= 0f) temp1 = 0f;
                     if (temp1 > 1.0f) temp1 = 1.0f;
@@ -194,88 +196,7 @@ public class MainActivity extends AppCompatActivity {
                     } else if (mXMove - mXDown > 0 && mXMove - (float) msg.obj < 0) {
                         moveState = 3;
                     }
-                    switch (moveState) {
-                        case 1:
-                            if (textSelectScale > faultNormalScale) {
-                                textSelectScale = textSelectScale - 0.01f < faultNormalScale ? faultNormalScale : textSelectScale - 0.001f;
-                                textViewList.get(Index).setScaleX(textSelectScale);
-                                textViewList.get(Index).setScaleY(textSelectScale);
-                            }
-                            textViewList.get(Index).setTabAlpha(temp1 - scale < 0f ? 0f : temp1 - scale);
-                            targetLeftIndex = Index + 1;
-                            textViewList.get(targetLeftIndex).setTabAlpha(1f - temp1);
-                            if (textNormalScale < faultSelectScale) {
-                                textNormalScale = textNormalScale + 0.01f > faultSelectScale ? faultSelectScale : textNormalScale + 0.001f;
-                                textViewList.get(targetLeftIndex).setScaleX(textNormalScale);
-                                textViewList.get(targetLeftIndex).setScaleY(textNormalScale);
-                            }
-                            if (Index - 1 >= 0) {
-                                textViewList.get(Index - 1).setTabAlpha(0f);
-                                textViewList.get(Index - 1).setTextSize(20);
-                            }
-                            rollBackIndex = targetLeftIndex;
-                            break;
-                        case 2:
-                            if (textNormalScale <= faultSelectScale) {
-                                textNormalScale = textNormalScale - 0.01f < faultNormalScale ? faultNormalScale : textNormalScale - 0.001f;
-                                textViewList.get(targetLeftIndex).setScaleX(textNormalScale);
-                                textViewList.get(targetLeftIndex).setScaleY(textNormalScale);
-                            }
-                            textViewList.get(Index).setTabAlpha(temp1 + scale > 1f ? 1f : temp1 + scale);
-                            targetLeftIndex = Index + 1;
-                            textViewList.get(targetLeftIndex).setTabAlpha(1f - temp1);
-                            if (textSelectScale >= faultNormalScale) {
-                                textSelectScale = textSelectScale + 0.01f > faultSelectScale ? faultSelectScale : textSelectScale + 0.001f;
-                                textViewList.get(Index).setScaleX(textSelectScale);
-                                textViewList.get(Index).setScaleY(textSelectScale);
-                            }
-                            if (Index - 1 >= 0) {
-                                textViewList.get(Index - 1).setTabAlpha(0f);
-                                textViewList.get(Index - 1).setTextSize(20);
-                            }
-                            rollBackIndex = targetLeftIndex;
-                            break;
-                        case 3:
-                            if (textSelectScale > faultNormalScale) {
-                                textSelectScale = textSelectScale - 0.01f < faultNormalScale ? faultNormalScale : textSelectScale - 0.001f;
-                                textViewList.get(Index).setScaleX(textSelectScale);
-                                textViewList.get(Index).setScaleY(textSelectScale);
-                            }
-                            textViewList.get(Index).setTabAlpha(temp1 - scale < 0f ? 0f : temp1 - scale);
-                            targetLeftIndex = Index - 1;
-                            if (textNormalScale < faultSelectScale) {
-                                textNormalScale = textNormalScale + 0.01f > faultSelectScale ? faultSelectScale : textNormalScale + 0.001f;
-                                textViewList.get(targetLeftIndex).setScaleX(textNormalScale);
-                                textViewList.get(targetLeftIndex).setScaleY(textNormalScale);
-                            }
-                            if (Index + 1 <= textViewList.size() - 1) {
-                                textViewList.get(Index + 1).setTabAlpha(0f);
-                                textViewList.get(Index + 1).setTextSize(20);
-                            }
-                            textViewList.get(targetLeftIndex).setTabAlpha(1f - temp1);
-                            rollBackIndex = targetLeftIndex;
-                            break;
-                        case 4:
-                            if (textNormalScale <= faultSelectScale) {
-                                textNormalScale = textNormalScale - 0.01f < faultNormalScale ? faultNormalScale : textNormalScale - 0.001f;
-                                textViewList.get(targetLeftIndex).setScaleX(textNormalScale);
-                                textViewList.get(targetLeftIndex).setScaleY(textNormalScale);
-                            }
-                            textViewList.get(Index).setTabAlpha(temp1 + scale > 1f ? 1f : temp1 + scale);
-                            if (textSelectScale >= faultNormalScale) {
-                                textSelectScale = textSelectScale + 0.01f > faultSelectScale ? faultSelectScale : textSelectScale + 0.001f;
-                                textViewList.get(Index).setScaleX(textSelectScale);
-                                textViewList.get(Index).setScaleY(textSelectScale);
-                            }
-                            targetLeftIndex = Index - 1;
-                            if (Index + 1 <= textViewList.size() - 1) {
-                                textViewList.get(Index + 1).setTabAlpha(0f);
-                                textViewList.get(Index + 1).setTextSize(20);
-                            }
-                            textViewList.get(targetLeftIndex).setTabAlpha(1f - temp1);
-                            rollBackIndex = targetLeftIndex;
-                            break;
-                    }
+                    MoveState(temp1);
                     mXMove = (float) msg.obj;
                     break;
                 case MotionEvent.ACTION_UP:
@@ -295,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
                                     else
                                         horizontalView.ScrollBy(-mTabItemWidth);
                                 }
+                                CursorFollow();
                                 textViewList.get(i).setTabAlpha(1f);
                                 ValueAnimator anim = ValueAnimator.ofFloat(textViewList.get(i).getScaleX(), faultSelectScale);
                                 anim.setDuration(moveAnimTime);
@@ -325,6 +247,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     } else if (rollBackIndex != -1) {
                         temp = Index;
+                        CursorFollow();
                         for (int i = 0; i < textViewList.size(); i++) {
                             if (i == temp) {
                                 textViewList.get(i).setTabAlpha(1f);
@@ -342,15 +265,16 @@ public class MainActivity extends AppCompatActivity {
                 case CommonUrl.FASTMOVE: //快速滑动时的up
                     if (Index < scrollView.getTargetIndex() && scrollView.getTargetIndex() >= startScroll) {
                         if (scrollView.getTargetIndex() == startScroll)
-                            horizontalView.ScrollBy(0, CommonUtil.convertDpToPx(mContext, 70));
+                            horizontalView.ScrollBy(0, mTabItemWidth);
                         else
-                            horizontalView.ScrollBy(CommonUtil.convertDpToPx(mContext, 70));
+                            horizontalView.ScrollBy(mTabItemWidth);
                     } else if (Index > scrollView.getTargetIndex() && scrollView.getTargetIndex() <= endScroll) {
                         if (scrollView.getTargetIndex() == endScroll)
-                            horizontalView.ScrollBy((endScroll - 1) * mTabItemWidth, -CommonUtil.convertDpToPx(mContext, 70));
+                            horizontalView.ScrollBy((endScroll - 1) * mTabItemWidth, -mTabItemWidth);
                         else
-                            horizontalView.ScrollBy(-CommonUtil.convertDpToPx(mContext, 70));
+                            horizontalView.ScrollBy(-mTabItemWidth);
                     }
+                    CursorFollow();
                     horizontalView.setLastView(textViewList.get(scrollView.getTargetIndex()));
                     ValueAnimator anim = ValueAnimator.ofFloat(textViewList.get(scrollView.getTargetIndex()).getScaleX(), faultSelectScale);
                     anim.setDuration(moveAnimTime);
@@ -381,4 +305,131 @@ public class MainActivity extends AppCompatActivity {
             super.handleMessage(msg);
         }
     };
+
+    /**
+     * 滑动的四种状态
+     * */
+    private void MoveState(float temp1) {
+        switch (moveState) {
+            case 1:
+                if (textSelectScale > faultNormalScale) {
+                    textSelectScale = textSelectScale - 0.01f < faultNormalScale ? faultNormalScale : textSelectScale - 0.001f;
+                    textViewList.get(Index).setScaleX(textSelectScale);
+                    textViewList.get(Index).setScaleY(textSelectScale);
+                }
+                textViewList.get(Index).setTabAlpha(temp1 - scale < 0f ? 0f : temp1 - scale);
+                targetLeftIndex = Index + 1;
+                textViewList.get(targetLeftIndex).setTabAlpha(1f - temp1);
+                if (textNormalScale < faultSelectScale) {
+                    textNormalScale = textNormalScale + 0.01f > faultSelectScale ? faultSelectScale : textNormalScale + 0.001f;
+                    textViewList.get(targetLeftIndex).setScaleX(textNormalScale);
+                    textViewList.get(targetLeftIndex).setScaleY(textNormalScale);
+                }
+                if (Index - 1 >= 0) {
+                    textViewList.get(Index - 1).setTabAlpha(0f);
+                    textViewList.get(Index - 1).setTextSize(20);
+                }
+                rollBackIndex = targetLeftIndex;
+                break;
+            case 2:
+                if (textNormalScale <= faultSelectScale) {
+                    textNormalScale = textNormalScale - 0.01f < faultNormalScale ? faultNormalScale : textNormalScale - 0.001f;
+                    textViewList.get(targetLeftIndex).setScaleX(textNormalScale);
+                    textViewList.get(targetLeftIndex).setScaleY(textNormalScale);
+                }
+                textViewList.get(Index).setTabAlpha(temp1 + scale > 1f ? 1f : temp1 + scale);
+                targetLeftIndex = Index + 1;
+                textViewList.get(targetLeftIndex).setTabAlpha(1f - temp1);
+                if (textSelectScale >= faultNormalScale) {
+                    textSelectScale = textSelectScale + 0.01f > faultSelectScale ? faultSelectScale : textSelectScale + 0.001f;
+                    textViewList.get(Index).setScaleX(textSelectScale);
+                    textViewList.get(Index).setScaleY(textSelectScale);
+                }
+                if (Index - 1 >= 0) {
+                    textViewList.get(Index - 1).setTabAlpha(0f);
+                    textViewList.get(Index - 1).setTextSize(20);
+                }
+                rollBackIndex = targetLeftIndex;
+                break;
+            case 3:
+                if (textSelectScale > faultNormalScale) {
+                    textSelectScale = textSelectScale - 0.01f < faultNormalScale ? faultNormalScale : textSelectScale - 0.001f;
+                    textViewList.get(Index).setScaleX(textSelectScale);
+                    textViewList.get(Index).setScaleY(textSelectScale);
+                }
+                textViewList.get(Index).setTabAlpha(temp1 - scale < 0f ? 0f : temp1 - scale);
+                targetLeftIndex = Index - 1;
+                if (textNormalScale < faultSelectScale) {
+                    textNormalScale = textNormalScale + 0.01f > faultSelectScale ? faultSelectScale : textNormalScale + 0.001f;
+                    textViewList.get(targetLeftIndex).setScaleX(textNormalScale);
+                    textViewList.get(targetLeftIndex).setScaleY(textNormalScale);
+                }
+                if (Index + 1 <= textViewList.size() - 1) {
+                    textViewList.get(Index + 1).setTabAlpha(0f);
+                    textViewList.get(Index + 1).setTextSize(20);
+                }
+                textViewList.get(targetLeftIndex).setTabAlpha(1f - temp1);
+                rollBackIndex = targetLeftIndex;
+                break;
+            case 4:
+                if (textNormalScale <= faultSelectScale) {
+                    textNormalScale = textNormalScale - 0.01f < faultNormalScale ? faultNormalScale : textNormalScale - 0.001f;
+                    textViewList.get(targetLeftIndex).setScaleX(textNormalScale);
+                    textViewList.get(targetLeftIndex).setScaleY(textNormalScale);
+                }
+                textViewList.get(Index).setTabAlpha(temp1 + scale > 1f ? 1f : temp1 + scale);
+                if (textSelectScale >= faultNormalScale) {
+                    textSelectScale = textSelectScale + 0.01f > faultSelectScale ? faultSelectScale : textSelectScale + 0.001f;
+                    textViewList.get(Index).setScaleX(textSelectScale);
+                    textViewList.get(Index).setScaleY(textSelectScale);
+                }
+                targetLeftIndex = Index - 1;
+                if (Index + 1 <= textViewList.size() - 1) {
+                    textViewList.get(Index + 1).setTabAlpha(0f);
+                    textViewList.get(Index + 1).setTextSize(20);
+                }
+                textViewList.get(targetLeftIndex).setTabAlpha(1f - temp1);
+                rollBackIndex = targetLeftIndex;
+                break;
+        }
+    }
+
+    /**
+     * Horizontalview游标跟随
+     * */
+    private void CursorFollow() {
+        ValueAnimator anim = ValueAnimator.ofFloat(lineView.getTranslationX(),//游标当前位置
+                getScrollDistance(Index, scrollView.getTargetIndex()));//目标位置
+        anim.setDuration(moveAnimTime);
+        anim.start();
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                lineView.setTranslationX((float) animation.getAnimatedValue());//设置平移过渡
+            }
+        });
+        lineViewParams = (LinearLayout.LayoutParams) lineView.getLayoutParams();
+        anim = ValueAnimator.ofFloat(lineViewParams.width,
+                textViewList.get(scrollView.getTargetIndex()).getViewWidth());//游标宽度过渡
+        anim.setDuration(moveAnimTime);
+        anim.start();
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                lineViewParams.width = Math.round(Float.parseFloat(animation.getAnimatedValue().toString()));
+                lineView.setLayoutParams(lineViewParams);
+            }
+        });
+    }
+
+    /**
+     * 返回目标X值
+     * */
+    private float getScrollDistance(int index, int targetIndex) {
+        float width = 0;
+        for (int i = 0; i < targetIndex; i++) {
+            width += textViewList.get(i).getViewWidth()+1; //1是中间的竖线宽度
+        }
+        return width < 0 ? 0 : width;
+    }
 }
